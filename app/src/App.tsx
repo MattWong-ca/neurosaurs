@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import Webcam from 'react-webcam'
 import './App.css'
 import { Neurosity } from '@neurosity/sdk'
 
@@ -11,7 +12,10 @@ function App() {
   const [focusArray, setFocusArray] = useState<number[]>([]);
   const [color, setColor] = useState('');
   const [skinColor, setSkinColor] = useState('');
-  const [storedAverage, setStoredAverage] = useState(0);
+  const [, setStoredAverage] = useState(0);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const webcamRef = useRef<Webcam>(null);
 
   const deviceId = import.meta.env.VITE_PUBLIC_NEUROSITY_DEVICE_ID;
   const email = import.meta.env.VITE_PUBLIC_NEUROSITY_EMAIL;
@@ -93,6 +97,20 @@ function App() {
     console.log('Color: ', color);
   }, [color]);
 
+  const takeSelfie = useCallback(() => {
+    const imageSrc = webcamRef.current?.getScreenshot();
+    if (imageSrc) {
+      setCapturedImage(imageSrc);
+    }
+  }, [webcamRef]);
+
+  const uploadImage = () => {
+    // Here you would implement the logic to upload the capturedImage
+    // to your server or API endpoint
+    console.log('Uploading image:', capturedImage);
+    // For now, we'll just log the image data URL
+  };
+
   return (
     <>
       <div>
@@ -120,6 +138,22 @@ function App() {
             Generate Image
           </button>
         </div>
+        <div>
+          <Webcam
+            audio={false}
+            ref={webcamRef}
+            screenshotFormat="image/jpeg"
+            videoConstraints={{ facingMode: "user" }}
+          />
+          <button onClick={takeSelfie}>Take Selfie</button>
+          <button onClick={uploadImage} disabled={!capturedImage}>Upload Selfie</button>
+        </div>
+        {capturedImage && (
+          <div>
+            <img src={capturedImage} alt="Captured selfie" style={{ maxWidth: '300px' }} />
+          </div>
+        )}
+        <video ref={videoRef} style={{ display: 'none' }} />
       </div>
     </>
   )
