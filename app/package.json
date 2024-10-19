@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dynamic-labs/ethereum": "^3.4.2",
+    "@dynamic-labs/sdk-react-core": "^3.4.2",
     "@neurosity/sdk": "^6.5.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

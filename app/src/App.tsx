@@ -2,8 +2,12 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Webcam from 'react-webcam'
 import './App.css'
 import { Neurosity } from '@neurosity/sdk'
+import { DynamicWidget, useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { isEthereumWallet } from '@dynamic-labs/ethereum';
+import { abi } from '../utils/abi.json';
 
 function App() {
+  const { primaryWallet } = useDynamicContext();
   const [loggedIn, setLoggedIn] = useState(false);
   const [focus, setFocus] = useState(0);
   const [isMonitoring, setIsMonitoring] = useState(false);
@@ -37,7 +41,7 @@ function App() {
       steps: 100,
       guidance: 20,
       response_format: 'b64',
-      strength: 0.3
+      strength: 0.25
     })
   };
 
@@ -105,7 +109,7 @@ function App() {
     } else if (average > 0.2 && average <= 0.4) {
       setFocusState('with a questionining look');
     } else if (average > 0.4 && average <= 0.6) {
-      setFocusState('looking');
+      setFocusState('staring');
     } else if (average > 0.6 && average <= 0.8) {
       setFocusState('staring intently');
     } else if (average > 0.8 && average <= 1.0) {
@@ -139,9 +143,44 @@ function App() {
     }
   };
 
+
+  // const sendTransaction = async () => {
+  //   if (!primaryWallet || !isEthereumWallet(primaryWallet)) return null;
+
+  //   const walletClient = await primaryWallet.getWalletClient();
+
+  //   const transaction = {
+  //     to: address,
+  //     value: amount ? parseEther(amount) : undefined,
+  //   };
+
+  //   const hash = await walletClient.sendTransaction(transaction);
+
+  // }
+
+  const writeContractCall = async () => {
+    if (!primaryWallet || !isEthereumWallet(primaryWallet)) return null;
+
+    const publicClient = await primaryWallet.getPublicClient();
+    const walletClient = await primaryWallet.getWalletClient();
+
+    const account = publicClient.account;
+// console.log(walletClient.account)
+    const { request } = await publicClient.simulateContract({
+      account,
+      address: '0x2A6123eEDea57303d2034f60A62C0C1529f06752',
+      abi: abi,
+      functionName: 'mintNFTTicket',
+    })
+    await walletClient.writeContract(request)
+  }
+
   return (
     <>
       <div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+          <DynamicWidget />
+        </div>
         <h1>Neuromint</h1>
         <p>{loggedIn ? "Device is connected. Use buttons to control monitoring." : "Logging in to device..."}</p>
         <p>Focus: {focus}%</p>
@@ -183,15 +222,16 @@ function App() {
         </div>
         {capturedImage && (
           <div>
-            <img src={`data:image/jpeg;base64,${capturedImage}`} alt="Captured selfie" style={{ width: '200px', height: '200px', objectFit: 'cover' }} />
+            <img src={`data:image/jpeg;base64,${capturedImage}`} alt="Captured selfie" />
           </div>
         )}
         <video ref={videoRef} style={{ display: 'none' }} />
         {aiImageUrl && (
           <div>
-            <img src={`data:image/jpeg;base64,${aiImageUrl}`} alt="AI image" style={{ width: '200px', height: '200px', objectFit: 'cover' }} />
+            <img src={`data:image/jpeg;base64,${aiImageUrl}`} alt="AI image" />
           </div>
         )}
+        <button onClick={writeContractCall}>Mint</button>
       </div>
     </>
   )
