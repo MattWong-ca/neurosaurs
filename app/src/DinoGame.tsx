@@ -14,7 +14,7 @@ const DinoGame: React.FC = () => {
   const [isJumping, setIsJumping] = useState(false);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
-
+  const [clickStarted, setClickStarted] = useState(false);
   const jump = useCallback(() => {
     if (!isJumping && !gameOver) {
       setIsJumping(true);
@@ -40,7 +40,7 @@ const DinoGame: React.FC = () => {
   }, [jump]);
 
   useEffect(() => {
-    if (!gameOver) {
+    if (!gameOver && clickStarted) {
       const gameLoop = setInterval(() => {
         setCactusLeft((prevLeft) => {
           if (prevLeft <= -CACTUS_WIDTH) {
@@ -64,7 +64,8 @@ const DinoGame: React.FC = () => {
         clearInterval(gameLoop);
       };
     }
-  }, [cactusLeft, dinoBottom, gameOver]);
+  }, [cactusLeft, dinoBottom, gameOver, clickStarted]);
+
 
   return (
     <div
@@ -114,6 +115,7 @@ const DinoGame: React.FC = () => {
           Game Over
         </div>
       )}
+      <button style={{ position: 'absolute', top: 10, left: 510 }} onClick={() => setClickStarted(true)}>Start</button>
     </div>
   );
 };
