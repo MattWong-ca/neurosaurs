@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import dino from '/dino.png';
+// import { Neurosity } from '@neurosity/sdk'
 
 const GAME_HEIGHT = 200;
 const GAME_WIDTH = 600;
@@ -15,6 +16,12 @@ const DinoGame: React.FC = () => {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [clickStarted, setClickStarted] = useState(false);
+//   const [neurosity, setNeurosity] = useState<Neurosity | null>(null);
+//   const [loggedIn, setLoggedIn] = useState(false);
+//   const deviceId = import.meta.env.VITE_PUBLIC_NEUROSITY_DEVICE_ID;
+//   const email = import.meta.env.VITE_PUBLIC_NEUROSITY_EMAIL;
+//   const password = import.meta.env.VITE_PUBLIC_NEUROSITY_PASSWORD;
+
   const jump = useCallback(() => {
     if (!isJumping && !gameOver) {
       setIsJumping(true);
@@ -38,6 +45,18 @@ const DinoGame: React.FC = () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
   }, [jump]);
+
+//   const fxn = () => {
+//     if (neurosity && loggedIn) {
+//         console.log("Starting monitoring");
+//         neurosity.kinesis("tongue").subscribe(async (intent) => {
+//           console.log(intent.probability)
+//           if (intent.probability > 0.1) {
+//             jump();
+//           }
+//         });
+//       }
+//   }
 
   useEffect(() => {
     if (!gameOver && clickStarted) {
@@ -116,6 +135,7 @@ const DinoGame: React.FC = () => {
         </div>
       )}
       <button style={{ position: 'absolute', top: 10, left: 510 }} onClick={() => setClickStarted(true)}>Start</button>
+      {/* <div onClick={fxn}>click</div> */}
     </div>
   );
 };
