@@ -2,8 +2,12 @@ import { useEffect, useState } from 'react';
 import DinoGame from './DinoGame'; // Make sure to create a separate file for DinoGame component
 import { Neurosity } from '@neurosity/sdk'
 import { Oval } from 'react-loader-spinner'; // Import the Oval spinner
+import { DynamicWidget, useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { isEthereumWallet } from '@dynamic-labs/ethereum';
+import { abi } from '../utils/abi.json';
 
 function App() {
+  const { primaryWallet } = useDynamicContext();
   const [loggedIn, setLoggedIn] = useState(false);
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [focus, setFocus] = useState(0);
@@ -27,7 +31,7 @@ function App() {
       'content-type': 'application/json',
       authorization: `Bearer ${apiKey}`
     },
-    body: JSON.stringify({response_format: 'url', prompt: prompt })
+    body: JSON.stringify({ response_format: 'b64', prompt: prompt })
   };
 
   useEffect(() => {
@@ -82,23 +86,23 @@ function App() {
         sum += focusArray[i];
       }
       const average = sum / focusArray.length;
-  
+
       if (average >= 0 && average <= 0.2) {
-        setPrompt('A baby dinosaur in an egg shell, in the style of pixel art.');
+        setPrompt('A baby dinosaur with a big brain in an egg shell, in the style of pixel art.');
       } else if (average > 0.2 && average <= 0.4) {
-        setPrompt('A baby dinosaur in the style of pixel art.');
+        setPrompt('A baby dinosaur with a big brain in the style of pixel art.');
       } else if (average > 0.4 && average <= 0.6) {
-        setPrompt('A dinosaur in the style of pixel art.');
+        setPrompt('A dinosaur with a big brain in the style of pixel art.');
       } else if (average > 0.6 && average <= 0.8) {
-        setPrompt('A serious dinosaur facing forward, in the style of pixel art.');
+        setPrompt('A serious dinosaur with a big brain facing forward, in the style of pixel art.');
       } else if (average > 0.8 && average <= 1.0) {
-        setPrompt('A fire-breathing dinosaur in the style of pixel art.');
+        setPrompt('A fire-breathing dinosaur with a big brain in the style of pixel art.');
       }
-  
+
       setAvgFocus(Math.round(average * 100));
     }
   }, [showAvg, focusArray]);
-  
+
   useEffect(() => {
     if (prompt) {
       fetchData();
@@ -110,7 +114,7 @@ function App() {
       const response = await fetch(url, options);
       const json = await response.json();
       console.log("JSON: ", json)
-      const aiImage = json.url
+      const aiImage = json.image
       console.log(aiImage)
       setAiImageUrl(aiImage);
 
@@ -119,9 +123,32 @@ function App() {
     }
   };
 
+  const writeContractCall = async () => {
+    if (!primaryWallet || !isEthereumWallet(primaryWallet)) return null;
+
+    const publicClient = await primaryWallet.getPublicClient();
+    const walletClient = await primaryWallet.getWalletClient();
+
+    const account = walletClient.account.address;
+    console.log(walletClient.account)
+    const { request } = await publicClient.simulateContract({
+      account,
+      address: '0x080a2d469e74670f7d9336A0589AA75148CDa173',
+      abi: abi,
+      functionName: 'mintNFT',
+      args: ['aiImageUrl', avgFocus]
+    })
+    await walletClient.writeContract(request)
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100vh', width: '100vw' }}>
-      <h1>Neurosaurs</h1>
+      <div style={{ width: '100%', position: 'relative' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: '5px' }}>Neurosaurs</h1>
+        <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
+          <DynamicWidget />
+        </div>
+      </div>
       <DinoGame />
       <p>{loggedIn ? "Neurosity Crown is connected! Your focus probability is:" : "Logging in to Crown..."}</p>
       <p style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '-0.5rem' }}>{focus}%</p>
@@ -133,9 +160,9 @@ function App() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <p>Your average focus probability is <span style={{ fontWeight: 'bold' }}>{avgFocus}%</span>!</p>
           <p style={{ marginTop: '-0.5rem' }}>Mint a Neurosaur that matches your focus:</p>
-          {!aiImageUrl ? 
-          (<div>
-            <Oval
+          {!aiImageUrl ?
+            (<div>
+              <Oval
                 height={40}
                 width={40}
                 color="#000000" // make this black
@@ -146,13 +173,13 @@ function App() {
                 secondaryColor="#000000"
                 strokeWidth={2}
                 strokeWidthSecondary={2}
-              />  
+              />
               <p>Generating...</p>
-          </div>)
-           : <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <img style={{ borderRadius: '1rem' }} width={200} src={aiImageUrl} alt="AI Image" />
-            <button style={{ marginTop: '0.5rem' }}>Mint</button>
-           </div>}
+            </div>)
+            : <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <img style={{ borderRadius: '1rem' }} width={200} src={`data:image/png;base64,${aiImageUrl}`} alt="AI Image" />
+              <button style={{ marginTop: '0.5rem' }} onClick={writeContractCall}>Mint</button>
+            </div>}
         </div>
 
       }
