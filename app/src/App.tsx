@@ -28,6 +28,7 @@ function App() {
   const email = import.meta.env.VITE_PUBLIC_NEUROSITY_EMAIL;
   const password = import.meta.env.VITE_PUBLIC_NEUROSITY_PASSWORD;
   const apiKey = import.meta.env.VITE_PUBLIC_API_KEY;
+  const [isMinting, setIsMinting] = useState(false);
 
   const url = "https://api.getimg.ai/v1/flux-schnell/text-to-image";
   const options = {
@@ -166,6 +167,7 @@ function App() {
   }, [primaryWallet]);
   
   const writeContractCall = async () => {
+    setIsMinting(true);
     const file = base64ToFile(aiImageUrl, 'neurosaur.png');
     const publisher = "https://walrus-testnet-publisher.nodes.guru";
     const url = `${publisher}/v1/store`;
@@ -207,6 +209,7 @@ function App() {
       args: [objectID, avgFocus]
     })
     await walletClient.writeContract(request)
+    setIsMinting(false);
   }
 
   useEffect(() => {
@@ -233,27 +236,27 @@ function App() {
   }, [objectID, account])
 
   // Add this function to your component or in a separate utility file
-  const retrieveImage = async (objectId: string) => {
-    const aggregator = "https://walrus-testnet-aggregator.nodes.guru";
-    const url = `${aggregator}/v1/${objectId}`;
-    console.log(url)
-    try {
-      const response = await fetch(url);
+  // const retrieveImage = async (objectId: string) => {
+  //   const aggregator = "https://walrus-testnet-aggregator.nodes.guru";
+  //   const url = `${aggregator}/v1/${objectId}`;
+  //   console.log(url)
+  //   try {
+  //     const response = await fetch(url);
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const imageUrl = URL.createObjectURL(blob);
-        console.log("Image retrieved successfully. URL:", imageUrl);
-        return imageUrl;
-      } else {
-        console.error("Failed to retrieve image:", await response.text());
-        return null;
-      }
-    } catch (error) {
-      console.error("Error retrieving image:", error);
-      return null;
-    }
-  };
+  //     if (response.ok) {
+  //       const blob = await response.blob();
+  //       const imageUrl = URL.createObjectURL(blob);
+  //       console.log("Image retrieved successfully. URL:", imageUrl);
+  //       return imageUrl;
+  //     } else {
+  //       console.error("Failed to retrieve image:", await response.text());
+  //       return null;
+  //     }
+  //   } catch (error) {
+  //     console.error("Error retrieving image:", error);
+  //     return null;
+  //   }
+  // };
 
   // You can then call this function like this:
   // useEffect(() => {
@@ -318,7 +321,23 @@ function App() {
             </div>)
             : <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <img style={{ borderRadius: '1rem' }} width={200} src={`data:image/png;base64,${aiImageUrl}`} alt="AI Image" />
-              <button style={{ marginTop: '0.5rem' }} onClick={writeContractCall}>Mint</button>
+              {
+                isMinting ?
+                  <Oval
+                    height={40}
+                    width={40}
+                    color="#000000" // make this black
+                    wrapperStyle={{}}
+                    wrapperClass=""
+                    visible={true}
+                    ariaLabel='oval-loading'
+                    secondaryColor="#000000"
+                    strokeWidth={2}
+                    strokeWidthSecondary={2}
+                  />
+                  :
+                  <button style={{ marginTop: '0.5rem' }} onClick={writeContractCall}>Mint</button>
+              }
             </div>}
         </div>
 
